@@ -1,40 +1,39 @@
-interface ThemeManager {
+interface Theme {
     isDark: boolean;
     toggle: () => void;
-    init: () => void;
 }
 
-export const setupTheme = (): ThemeManager => ({
-    isDark: localStorage.theme === 'dark' || 
-            (!('theme' in localStorage) && 
-            window.matchMedia('(prefers-color-scheme: dark)').matches),
+export const setupTheme = (): Theme => {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const storedTheme = localStorage.getItem('theme');
+    
+    const initialState = {
+        isDark: storedTheme 
+            ? storedTheme === 'dark'
+            : prefersDark
+    };
 
-    init() {
-        // Set initial state
-        if (this.isDark) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    },
-
-    toggle() {
-        // Toggle state
-        this.isDark = !this.isDark;
-
-        // Apply changes
-        if (this.isDark) {
-            document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
-        }
+    // Apply initial theme to document
+    if (initialState.isDark) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
     }
-});
 
-// Initialize theme on script load
-document.addEventListener('DOMContentLoaded', () => {
-    const theme = setupTheme();
-    theme.init();
-});
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', e => {
+            if (!localStorage.getItem('theme')) {
+                document.documentElement.classList.toggle('dark', e.matches);
+            }
+        });
+
+    return {
+        isDark: initialState.isDark,
+        toggle() {
+            this.isDark = !this.isDark;
+            document.documentElement.classList.toggle('dark', this.isDark);
+            localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+        }
+    };
+};

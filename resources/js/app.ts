@@ -13,41 +13,29 @@ declare global {
 // Initialize Alpine
 window.Alpine = Alpine;
 
-// Register components
-Alpine.data('loginForm', setupFormValidation);
-Alpine.data('registerForm', setupRegisterFormValidation);
-
 // Initialize theme
 const theme = setupTheme();
 
-// Register theme component with initial state
-Alpine.data('theme', () => ({
-    isDark: theme.isDark,
-
-    init() {
-        // Apply initial theme
-        if (this.isDark) {
-            document.documentElement.classList.add('dark');
+// Register Alpine store
+document.addEventListener('alpine:init', () => {
+    Alpine.store('theme', {
+        isDark: theme.isDark,
+        toggle() {
+            this.isDark = !this.isDark;
+            document.documentElement.classList.toggle('dark', this.isDark);
+            localStorage.theme = this.isDark ? 'dark' : 'light';
         }
-    },
+    });
+});
 
-    toggle() {
-        this.isDark = !this.isDark;
-        
-        if (this.isDark) {
-            document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
-        }
-    }
-}));
+// Register form components
+Alpine.data('loginForm', setupFormValidation);
+Alpine.data('registerForm', setupRegisterFormValidation);
 
 // Start Alpine
 Alpine.start();
 
-// Initialize theme on page load
+// Apply initial theme
 document.addEventListener('DOMContentLoaded', () => {
-    theme.init();
+    document.documentElement.classList.toggle('dark', theme.isDark);
 });
